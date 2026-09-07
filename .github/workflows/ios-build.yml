@@ -16,11 +16,32 @@ jobs:
         with:
           channel: stable
 
-      - name: Show Flutter version
+      - name: Flutter version
         run: flutter --version
 
-      - name: Install dependencies
+      - name: Clean Flutter
+        run: flutter clean
+
+      - name: Get dependencies
         run: flutter pub get
+
+      - name: Set iOS deployment target
+        run: |
+          echo "Setting iOS deployment target to 15.5"
+
+          if [ -f ios/Podfile ]; then
+            sed -i '' "s/platform :ios, '[^']*'/platform :ios, '15.5'/" ios/Podfile
+          else
+            echo "No Podfile found. Flutter/CocoaPods will generate it."
+          fi
+
+          find ios -name "project.pbxproj" -exec sed -i '' \
+            's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*/IPHONEOS_DEPLOYMENT_TARGET = 15.5/g' {} \;
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install --repo-update
 
       - name: Build iOS
         run: flutter build ios --release --no-codesign
