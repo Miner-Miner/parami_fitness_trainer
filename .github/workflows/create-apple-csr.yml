@@ -1,0 +1,31 @@
+with:
+
+name: Create Apple CSR
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create-csr:
+    runs-on: macos-latest
+
+    steps:
+      - name: Generate private key
+        run: |
+          openssl genrsa -out apple_distribution.key 2048
+
+      - name: Generate CSR
+        run: |
+          openssl req \
+            -new \
+            -key apple_distribution.key \
+            -out apple_distribution.csr \
+            -subj "/CN=Apple Distribution Certificate"
+
+      - name: Upload CSR and private key
+        uses: actions/upload-artifact@v4
+        with:
+          name: apple-signing-files
+          path: |
+            apple_distribution.csr
+            apple_distribution.key
