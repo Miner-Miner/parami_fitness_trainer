@@ -10,6 +10,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
       - name: Set up signing
         env:
           CERT_P12_BASE64: ${{ secrets.CERT_P12_BASE64 }}
@@ -29,24 +34,14 @@ jobs:
           echo -n "$PROFILE_BASE64" | base64 --decode \
             > ~/Library/MobileDevice/Provisioning\ Profiles/app.mobileprovision
 
-      - name: Set build number
-        run: agvtool new-version -all ${{ github.run_number }}
+      - name: Install dependencies
+        run: flutter pub get
 
-      - name: Archive
+      - name: Build IPA
         run: |
-          xcodebuild archive \
-            -project YourApp.xcodeproj \
-            -scheme YourApp \
-            -configuration Release \
-            -destination 'generic/platform=iOS' \
-            -archivePath $RUNNER_TEMP/YourApp.xcarchive
-
-      - name: Export IPA
-        run: |
-          xcodebuild -exportArchive \
-            -archivePath $RUNNER_TEMP/YourApp.xcarchive \
-            -exportOptionsPlist ExportOptions.plist \
-            -exportPath $RUNNER_TEMP/export
+          flutter build ipa --release \
+            --build-number ${{ github.run_number }} \
+            --export-options-plist=ExportOptions.plist
 
       - name: Upload to TestFlight
         env:
@@ -57,10 +52,10 @@ jobs:
           mkdir -p ~/.appstoreconnect/private_keys
           echo -n "$ASC_KEY_P8_BASE64" | base64 --decode \
             > ~/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8
-          xcrun altool --upload-app -f $RUNNER_TEMP/export/*.ipa -t ios \
+          xcrun altool --upload-app -f build/ios/ipa/*.ipa -t ios \
             --apiKey $ASC_KEY_ID --apiIssuer $ASC_ISSUER_ID
 
       - uses: actions/upload-artifact@v4
         with:
           name: ipa
-          path: ${{ runner.temp }}/export/*.ipa
+          path: build/ios/ipa/*.ipa
