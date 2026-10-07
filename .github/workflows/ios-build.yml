@@ -46,9 +46,16 @@ jobs:
           security list-keychains -d user -s $KEYCHAIN login.keychain-db
           security default-keychain -s $KEYCHAIN
 
+          # Install provisioning profile (named by UUID, in both folders Xcode checks)
+          echo -n "$PROFILE_BASE64" | base64 --decode > $RUNNER_TEMP/app.mobileprovision
+          security cms -D -i $RUNNER_TEMP/app.mobileprovision > $RUNNER_TEMP/profile.plist
+          UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" $RUNNER_TEMP/profile.plist)
+          PNAME=$(/usr/libexec/PlistBuddy -c "Print Name" $RUNNER_TEMP/profile.plist)
+          echo "Installed profile: $PNAME ($UUID)"
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          echo -n "$PROFILE_BASE64" | base64 --decode \
-            > ~/Library/MobileDevice/Provisioning\ Profiles/app.mobileprovision
+          mkdir -p ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles
+          cp $RUNNER_TEMP/app.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
+          cp $RUNNER_TEMP/app.mobileprovision ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/$UUID.mobileprovision
 
           echo "--- Identities ---"
           security find-identity -v -p codesigning
