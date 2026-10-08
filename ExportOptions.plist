@@ -13,7 +13,7 @@
   <key>provisioningProfiles</key>
   <dict>
     <key>website.coreaxistechnologies.paramiFitnessTrainer</key>
-    <string>Parami Fitness Trainer</string>
+    <string>Parami Trainer</string>
   </dict>
 </dict>
 </plist>

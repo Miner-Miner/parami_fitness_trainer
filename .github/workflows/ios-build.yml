@@ -6,7 +6,7 @@ on:
 
 env:
   TEAM_ID: 56RMQHYVB4
-  PROFILE_NAME: Parami Fitness Trainer
+  PROFILE_NAME: Parami Trainer
   BUNDLE_ID: website.coreaxistechnologies.paramiFitnessTrainer
 
 jobs:
