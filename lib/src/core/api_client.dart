@@ -18,7 +18,7 @@ class ApiClient {
   ApiClient(this.session);
 
   static const defaultBaseUrl = 'https://parami.coreaxistechnologies.website';
-  static const defaultDatabase = 'parami_demo';
+  static const defaultDatabase = 'parami_19_09_26';
 
   final TrainerSession session;
 
