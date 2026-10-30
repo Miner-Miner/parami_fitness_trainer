@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../app.dart';
+import '../theme/app_theme.dart';
+import '../theme/theme_picker.dart';
 import '../core/api_client.dart';
 import '../core/session_store.dart';
 import 'member_scanner_page.dart';
@@ -16,9 +17,17 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   var _index = 0;
+  static const destinations = [
+    ('Customers', Icons.groups_outlined),
+    ('QR scan', Icons.qr_code_scanner),
+    ('Classes', Icons.calendar_month_outlined),
+    ('Profile', Icons.person_outline),
+  ];
 
   @override
   Widget build(BuildContext context) {
+    final style = AppPalette.of(context);
+    final theme = style.variant;
     final session = widget.sessionStore.session!;
     final api = ApiClient(session);
     final pages = [
@@ -29,69 +38,90 @@ class _HomeShellState extends State<HomeShell> {
     ];
 
     return Scaffold(
-      body: SafeArea(
-        child: IndexedStack(index: _index, children: pages),
+      appBar: AppBar(
+        title: Text(
+          theme == TrainerTheme.roseGold ? destinations[_index].$1 : 'PARAMI',
+        ),
+        actions: [
+          ThemePickerButton(sessionStore: widget.sessionStore, onDark: true),
+        ],
       ),
-      bottomNavigationBar: DecoratedBox(
-        decoration: const BoxDecoration(
-          color: AppPalette.navy,
-          boxShadow: [
-            BoxShadow(
-              color: Color(0x2A071A33),
-              blurRadius: 20,
-              offset: Offset(0, -5),
+      drawer: theme != TrainerTheme.roseGold
+          ? null
+          : Drawer(
+              child: SafeArea(
+                child: ListView(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Text('Trainer workspace'),
+                    ),
+                    for (final (index, label, icon) in [
+                      (0, 'Customers', Icons.groups_outlined),
+                      (1, 'QR scan', Icons.qr_code_scanner),
+                      (2, 'Classes', Icons.calendar_month_outlined),
+                      (3, 'Profile', Icons.person_outline),
+                    ])
+                      ListTile(
+                        leading: Icon(icon),
+                        title: Text(label),
+                        selected: _index == index,
+                        onTap: () {
+                          setState(() => _index = index);
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ),
+      bottomNavigationBar: theme == TrainerTheme.monochrome
+          ? NavigationBar(
+              selectedIndex: _index,
+              onDestinationSelected: (index) => setState(() => _index = index),
+              destinations: [
+                for (final item in destinations)
+                  NavigationDestination(icon: Icon(item.$2), label: item.$1),
+              ],
+            )
+          : null,
+      body: SafeArea(
+        child: Row(
+          children: [
+            if (theme == TrainerTheme.gold)
+              LayoutBuilder(
+                builder: (context, constraints) => SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: IntrinsicHeight(
+                      child: NavigationRail(
+                        minWidth: 64,
+                        extended: MediaQuery.sizeOf(context).width >= 900,
+                        labelType: MediaQuery.sizeOf(context).width >= 900
+                            ? NavigationRailLabelType.none
+                            : NavigationRailLabelType.selected,
+                        selectedIndex: _index,
+                        onDestinationSelected: (index) =>
+                            setState(() => _index = index),
+                        destinations: [
+                          for (final item in destinations)
+                            NavigationRailDestination(
+                              icon: Icon(item.$2),
+                              label: Text(item.$1),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            Expanded(
+              key: const ValueKey('workspace-pages'),
+              child: IndexedStack(index: _index, children: pages),
             ),
           ],
-        ),
-        child: NavigationBarTheme(
-          data: NavigationBarThemeData(
-            backgroundColor: AppPalette.navy,
-            indicatorColor: Colors.white.withValues(alpha: 0.14),
-            labelTextStyle: WidgetStateProperty.resolveWith(
-              (states) => TextStyle(
-                color: Colors.white.withValues(
-                  alpha: states.contains(WidgetState.selected) ? 1 : 0.62,
-                ),
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            iconTheme: WidgetStateProperty.resolveWith(
-              (states) => IconThemeData(
-                color: Colors.white.withValues(
-                  alpha: states.contains(WidgetState.selected) ? 1 : 0.6,
-                ),
-              ),
-            ),
-          ),
-          child: NavigationBar(
-            selectedIndex: _index,
-            height: 72,
-            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-            onDestinationSelected: (index) => setState(() => _index = index),
-            destinations: const [
-              NavigationDestination(
-                icon: Icon(Icons.groups_outlined),
-                selectedIcon: Icon(Icons.groups_rounded),
-                label: 'Customers',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.qr_code_scanner_outlined),
-                selectedIcon: Icon(Icons.qr_code_scanner_rounded),
-                label: 'QR scan',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.calendar_month_outlined),
-                selectedIcon: Icon(Icons.calendar_month_rounded),
-                label: 'Classes',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.person_outline_rounded),
-                selectedIcon: Icon(Icons.person_rounded),
-                label: 'Profile',
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -130,25 +160,25 @@ class _CustomersScreenState extends State<CustomersScreen> {
         return RefreshIndicator(
           onRefresh: _reload,
           child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
+            physics: AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(20, 24, 20, 28),
             children: [
-              const _PageIntro(
+              _PageIntro(
                 eyebrow: 'TRAINER ROSTER',
                 title: 'Your customers',
                 subtitle:
                     'Members assigned to your personal training sessions.',
               ),
-              const SizedBox(height: 22),
+              SizedBox(height: 22),
               if (snapshot.connectionState == ConnectionState.waiting)
-                const _LoadingList()
+                _LoadingList()
               else if (snapshot.hasError)
                 _ErrorCard(
                   message: _errorText(snapshot.error),
                   onRetry: _reload,
                 )
               else if (customers.isEmpty)
-                const _EmptyCard(
+                _EmptyCard(
                   icon: Icons.groups_outlined,
                   title: 'No customers assigned yet',
                   detail:
@@ -156,10 +186,10 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 )
               else ...[
                 _RosterCount(count: customers.length),
-                const SizedBox(height: 14),
+                SizedBox(height: 14),
                 ...customers.map(
                   (customer) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
+                    padding: EdgeInsets.only(bottom: 10),
                     child: _CustomerCard(customer: customer),
                   ),
                 ),
@@ -180,24 +210,26 @@ class _RosterCount extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _WhiteCard(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      padding: EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       child: Row(
         children: [
           Container(
             width: 43,
             height: 43,
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF2FA),
-              borderRadius: BorderRadius.circular(14),
+              color: AppPalette.of(context).mist,
+              borderRadius: BorderRadius.circular(
+                AppPalette.of(context).radius,
+              ),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.people_alt_outlined,
-              color: AppPalette.navy,
+              color: AppPalette.of(context).foregroundAccent,
             ),
           ),
-          const SizedBox(width: 13),
+          SizedBox(width: 13),
           Text('$count', style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(width: 7),
+          SizedBox(width: 7),
           Text(
             count == 1 ? 'active customer' : 'active customers',
             style: Theme.of(context).textTheme.bodyMedium,
@@ -219,27 +251,27 @@ class _CustomerCard extends StatelessWidget {
     final memberId = _text(customer['member_id']);
     final userId = _text(customer['user_id']);
     return _WhiteCard(
-      padding: const EdgeInsets.all(15),
+      padding: EdgeInsets.all(15),
       child: Row(
         children: [
           CircleAvatar(
             radius: 24,
-            backgroundColor: AppPalette.navy,
+            backgroundColor: AppPalette.of(context).navyBright,
             child: Text(
               _initials(name),
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
               ),
             ),
           ),
-          const SizedBox(width: 13),
+          SizedBox(width: 13),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(name, style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 3),
+                SizedBox(height: 3),
                 Text(
                   memberId.isEmpty ? 'User ID: $userId' : memberId,
                   style: Theme.of(context).textTheme.bodyMedium,
@@ -247,7 +279,10 @@ class _CustomerCard extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.chevron_right_rounded, color: AppPalette.steel),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: AppPalette.of(context).steel,
+          ),
         ],
       ),
     );
@@ -269,7 +304,7 @@ class _SessionScanScreenState extends State<SessionScanScreen> {
   Future<void> _scanAndConsume() async {
     final member = await Navigator.of(context).push<MemberScan>(
       MaterialPageRoute(
-        builder: (_) => const MemberScannerPage(
+        builder: (_) => MemberScannerPage(
           title: 'Check in member',
           subtitle: 'Align the member QR code inside the frame',
         ),
@@ -309,24 +344,27 @@ class _SessionScanScreenState extends State<SessionScanScreen> {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
+      padding: EdgeInsets.fromLTRB(20, 24, 20, 28),
       children: [
-        const _PageIntro(
+        _PageIntro(
           eyebrow: 'SESSION CHECK-IN',
           title: 'Scan. Confirm. Train.',
           subtitle:
               'Use a member QR code to consume one personal-training session.',
         ),
-        const SizedBox(height: 28),
+        SizedBox(height: 28),
         Container(
           height: 274,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppPalette.navy, AppPalette.navyBright],
+            gradient: LinearGradient(
+              colors: [
+                AppPalette.of(context).navy,
+                AppPalette.of(context).navyBright,
+              ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(AppPalette.of(context).radius),
           ),
           child: Stack(
             children: [
@@ -343,7 +381,7 @@ class _SessionScanScreenState extends State<SessionScanScreen> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(25),
+                padding: EdgeInsets.all(25),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -352,16 +390,18 @@ class _SessionScanScreenState extends State<SessionScanScreen> {
                       width: 50,
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.16),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(
+                          AppPalette.of(context).radius,
+                        ),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.qr_code_scanner_rounded,
                         color: Colors.white,
                         size: 29,
                       ),
                     ),
-                    const Spacer(),
-                    const Text(
+                    Spacer(),
+                    Text(
                       'Ready for the next member?',
                       style: TextStyle(
                         color: Colors.white,
@@ -369,7 +409,7 @@ class _SessionScanScreenState extends State<SessionScanScreen> {
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6),
                     Text(
                       'The QR must contain both member_id and user_id.',
                       style: TextStyle(
@@ -383,11 +423,11 @@ class _SessionScanScreenState extends State<SessionScanScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 18),
+        SizedBox(height: 18),
         FilledButton.icon(
           onPressed: _isSubmitting ? null : _scanAndConsume,
           icon: _isSubmitting
-              ? const SizedBox(
+              ? SizedBox(
                   height: 19,
                   width: 19,
                   child: CircularProgressIndicator(
@@ -395,23 +435,29 @@ class _SessionScanScreenState extends State<SessionScanScreen> {
                     strokeWidth: 2,
                   ),
                 )
-              : const Icon(Icons.center_focus_strong_rounded),
+              : Icon(Icons.center_focus_strong_rounded),
           label: Text(
             _isSubmitting ? 'Recording session...' : 'Start QR scanner',
           ),
         ),
-        const SizedBox(height: 18),
+        SizedBox(height: 18),
         _WhiteCard(
-          padding: const EdgeInsets.all(17),
-          child: const Row(
+          padding: EdgeInsets.all(17),
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.info_outline_rounded, color: AppPalette.navy),
+              Icon(
+                Icons.info_outline_rounded,
+                color: AppPalette.of(context).foregroundAccent,
+              ),
               SizedBox(width: 12),
               Expanded(
                 child: Text(
                   'If a camera cannot read the code, use the manual entry option in the scanner. Confirm the member ID before continuing.',
-                  style: TextStyle(color: Color(0xFF52657A), height: 1.45),
+                  style: TextStyle(
+                    color: AppPalette.of(context).muted,
+                    height: 1.45,
+                  ),
                 ),
               ),
             ],
@@ -454,25 +500,25 @@ class _ClassesScreenState extends State<ClassesScreen> {
         return RefreshIndicator(
           onRefresh: _reload,
           child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
+            physics: AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(20, 24, 20, 28),
             children: [
-              const _PageIntro(
+              _PageIntro(
                 eyebrow: 'CLASS PROGRAMME',
                 title: 'Your classes',
                 subtitle:
                     'Open a class to review its schedule and take attendance.',
               ),
-              const SizedBox(height: 22),
+              SizedBox(height: 22),
               if (snapshot.connectionState == ConnectionState.waiting)
-                const _LoadingList()
+                _LoadingList()
               else if (snapshot.hasError)
                 _ErrorCard(
                   message: _errorText(snapshot.error),
                   onRetry: _reload,
                 )
               else if (classes.isEmpty)
-                const _EmptyCard(
+                _EmptyCard(
                   icon: Icons.calendar_month_outlined,
                   title: 'No classes found',
                   detail: 'Classes assigned to this trainer will appear here.',
@@ -480,7 +526,7 @@ class _ClassesScreenState extends State<ClassesScreen> {
               else
                 ...classes.map(
                   (gymClass) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
+                    padding: EdgeInsets.only(bottom: 12),
                     child: _ClassCard(
                       gymClass: gymClass,
                       onTap: () {
@@ -521,26 +567,28 @@ class _ClassCard extends StatelessWidget {
       padding: EdgeInsets.zero,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppPalette.of(context).radius),
         child: Padding(
-          padding: const EdgeInsets.all(18),
+          padding: EdgeInsets.all(18),
           child: Row(
             children: [
               Container(
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEAF2FA),
-                  borderRadius: BorderRadius.circular(16),
+                  color: AppPalette.of(context).mist,
+                  borderRadius: BorderRadius.circular(
+                    AppPalette.of(context).radius,
+                  ),
                 ),
                 child: Icon(
                   classType == 'PAID'
                       ? Icons.workspace_premium_outlined
                       : Icons.fitness_center_outlined,
-                  color: AppPalette.navy,
+                  color: AppPalette.of(context).foregroundAccent,
                 ),
               ),
-              const SizedBox(width: 14),
+              SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -557,7 +605,7 @@ class _ClassCard extends StatelessWidget {
                         _TypePill(label: classType),
                       ],
                     ),
-                    const SizedBox(height: 7),
+                    SizedBox(height: 7),
                     Text(
                       '${schedule.length} ${schedule.length == 1 ? 'schedule' : 'schedules'}  |  ${_text(gymClass['instructor_name'], fallback: 'Trainer')}',
                       style: Theme.of(context).textTheme.bodyMedium,
@@ -565,8 +613,11 @@ class _ClassCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              const Icon(Icons.arrow_forward_rounded, color: AppPalette.navy),
+              SizedBox(width: 8),
+              Icon(
+                Icons.arrow_forward_rounded,
+                color: AppPalette.of(context).foregroundAccent,
+              ),
             ],
           ),
         ),
@@ -611,8 +662,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
   Future<List<Map<String, dynamic>>> _loadSchedule() async {
     final now = DateTime.now();
     final allSchedule = await widget.api.schedule(
-      dateFrom: now.subtract(const Duration(days: 7)),
-      dateTo: now.add(const Duration(days: 35)),
+      dateFrom: now.subtract(Duration(days: 7)),
+      dateTo: now.add(Duration(days: 35)),
     );
     final classId = _int(widget.gymClass['id']);
     return allSchedule
@@ -629,8 +680,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
     final selected = await showDatePicker(
       context: context,
       initialDate: _attendanceDate,
-      firstDate: DateTime.now().subtract(const Duration(days: 365)),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      firstDate: DateTime.now().subtract(Duration(days: 365)),
+      lastDate: DateTime.now().add(Duration(days: 365)),
       helpText: 'SELECT CLASS DATE',
     );
     if (selected != null && mounted) setState(() => _attendanceDate = selected);
@@ -645,7 +696,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
 
     final member = await Navigator.of(context).push<MemberScan>(
       MaterialPageRoute(
-        builder: (_) => const MemberScannerPage(
+        builder: (_) => MemberScannerPage(
           title: 'Class attendance',
           subtitle: 'Scan the member QR code to mark attendance',
         ),
@@ -697,10 +748,10 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
     ).toUpperCase();
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppPalette.mist,
-        foregroundColor: AppPalette.navy,
+        backgroundColor: AppPalette.of(context).navyBright,
+        foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Class details',
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
@@ -708,32 +759,37 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
       body: RefreshIndicator(
         onRefresh: _reloadSchedule,
         child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          physics: AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(20, 8, 20, 32),
           children: [
             Container(
-              padding: const EdgeInsets.all(22),
+              padding: EdgeInsets.all(22),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppPalette.navy, AppPalette.navyBright],
+                gradient: LinearGradient(
+                  colors: [
+                    AppPalette.of(context).navy,
+                    AppPalette.of(context).navyBright,
+                  ],
                 ),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(
+                  AppPalette.of(context).radius,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _TypePill(label: classType, dark: true),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   Text(
                     _text(gymClass['name'], fallback: 'Untitled class'),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
                       fontSize: 27,
                       fontWeight: FontWeight.w900,
                       letterSpacing: -0.8,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     'Instructor: ${_text(gymClass['instructor_name'], fallback: 'Trainer')}',
                     style: TextStyle(
@@ -741,7 +797,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                     ),
                   ),
                   if (_text(gymClass['capacity']).isNotEmpty) ...[
-                    const SizedBox(height: 5),
+                    SizedBox(height: 5),
                     Text(
                       'Capacity: ${_text(gymClass['capacity'])}',
                       style: TextStyle(
@@ -752,17 +808,17 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Text(
               'Upcoming schedule',
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             FutureBuilder<List<Map<String, dynamic>>>(
               future: _schedule,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const _LoadingList(compact: true);
+                  return _LoadingList(compact: true);
                 }
                 if (snapshot.hasError) {
                   return _ErrorCard(
@@ -772,7 +828,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                 }
                 final slots = snapshot.data ?? const <Map<String, dynamic>>[];
                 if (slots.isEmpty) {
-                  return const _EmptyCard(
+                  return _EmptyCard(
                     icon: Icons.event_busy_outlined,
                     title: 'No upcoming sessions',
                     detail: 'Pull down to refresh the trainer schedule.',
@@ -783,7 +839,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                   children: slots
                       .map(
                         (slot) => Padding(
-                          padding: const EdgeInsets.only(bottom: 9),
+                          padding: EdgeInsets.only(bottom: 9),
                           child: _ScheduleCard(slot: slot),
                         ),
                       )
@@ -791,14 +847,14 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                 );
               },
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             Text(
               'Take attendance',
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             _WhiteCard(
-              padding: const EdgeInsets.all(18),
+              padding: EdgeInsets.all(18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -806,36 +862,36 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                     'Choose the session date before scanning a member.',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   OutlinedButton.icon(
                     onPressed: _pickDate,
-                    icon: const Icon(Icons.calendar_today_outlined),
+                    icon: Icon(Icons.calendar_today_outlined),
                     label: Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
                         _longDate(_attendanceDate),
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+                        style: TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppPalette.navy,
-                      padding: const EdgeInsets.symmetric(
+                      foregroundColor: AppPalette.of(context).navyBright,
+                      padding: EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 15,
                       ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
+                        borderRadius: BorderRadius.circular(
+                          AppPalette.of(context).radius,
+                        ),
                       ),
                     ),
                   ),
                   if (_scheduleLines.isNotEmpty) ...[
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     DropdownButtonFormField<int>(
                       initialValue: _selectedScheduleId,
                       isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Class schedule',
-                      ),
+                      decoration: InputDecoration(labelText: 'Class schedule'),
                       items: _scheduleLines
                           .map(
                             (line) => DropdownMenuItem<int>(
@@ -854,11 +910,11 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                           setState(() => _selectedScheduleId = value),
                     ),
                   ],
-                  const SizedBox(height: 18),
+                  SizedBox(height: 18),
                   FilledButton.icon(
                     onPressed: _isMarkingAttendance ? null : _scanAndMarkDone,
                     icon: _isMarkingAttendance
-                        ? const SizedBox(
+                        ? SizedBox(
                             height: 19,
                             width: 19,
                             child: CircularProgressIndicator(
@@ -866,7 +922,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                               strokeWidth: 2,
                             ),
                           )
-                        : const Icon(Icons.qr_code_scanner_rounded),
+                        : Icon(Icons.qr_code_scanner_rounded),
                     label: Text(
                       _isMarkingAttendance
                           ? 'Recording attendance...'
@@ -898,19 +954,24 @@ class _ScheduleCard extends StatelessWidget {
     final bookingCount = _text(slot['booking_count']);
     final capacity = _text(slot['capacity']);
     return _WhiteCard(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       child: Row(
         children: [
           Container(
             height: 45,
             width: 45,
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF2FA),
-              borderRadius: BorderRadius.circular(14),
+              color: AppPalette.of(context).mist,
+              borderRadius: BorderRadius.circular(
+                AppPalette.of(context).radius,
+              ),
             ),
-            child: const Icon(Icons.schedule_rounded, color: AppPalette.navy),
+            child: Icon(
+              Icons.schedule_rounded,
+              color: AppPalette.of(context).foregroundAccent,
+            ),
           ),
-          const SizedBox(width: 13),
+          SizedBox(width: 13),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -920,7 +981,7 @@ class _ScheduleCard extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 if (time.isNotEmpty) ...[
-                  const SizedBox(height: 3),
+                  SizedBox(height: 3),
                   Text(time, style: Theme.of(context).textTheme.bodyMedium),
                 ],
               ],
@@ -929,8 +990,8 @@ class _ScheduleCard extends StatelessWidget {
           if (bookingCount.isNotEmpty || capacity.isNotEmpty)
             Text(
               '${bookingCount.isEmpty ? '0' : bookingCount}/${capacity.isEmpty ? '-' : capacity}',
-              style: const TextStyle(
-                color: AppPalette.navy,
+              style: TextStyle(
+                color: AppPalette.of(context).foregroundAccent,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -972,18 +1033,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Sign out?'),
-        content: const Text(
+        title: Text('Sign out?'),
+        content: Text(
           'Your saved trainer session will be removed from this device.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Sign out'),
+            child: Text('Sign out'),
           ),
         ],
       ),
@@ -999,30 +1060,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context, snapshot) {
         final profile = snapshot.data ?? const <String, dynamic>{};
         final name = _text(profile['name'], fallback: session.name);
-        final memberId = _text(
-          profile['member_id'],
-          fallback: session.memberId,
-        );
         return RefreshIndicator(
           onRefresh: _reload,
           child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
+            physics: AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(20, 24, 20, 28),
             children: [
-              const _PageIntro(
+              _PageIntro(
                 eyebrow: 'ACCOUNT',
                 title: 'Your profile',
                 subtitle: 'Trainer account and connection details.',
               ),
-              const SizedBox(height: 22),
-              _ProfileHero(
-                name: name,
-                memberId: memberId,
-                login: session.login,
-              ),
-              const SizedBox(height: 20),
+              SizedBox(height: 22),
+              _ProfileHero(name: name, login: session.login),
+              SizedBox(height: 20),
               if (snapshot.connectionState == ConnectionState.waiting)
-                const _LoadingList(compact: true)
+                _LoadingList(compact: true)
               else if (snapshot.hasError)
                 _ErrorCard(
                   message: _errorText(snapshot.error),
@@ -1030,13 +1083,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 )
               else
                 _ProfileDetails(profile: profile, session: session),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               _WhiteCard(
                 padding: EdgeInsets.zero,
                 child: InkWell(
                   onTap: _signOut,
-                  borderRadius: BorderRadius.circular(20),
-                  child: const Padding(
+                  borderRadius: BorderRadius.circular(
+                    AppPalette.of(context).radius,
+                  ),
+                  child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 18, vertical: 17),
                     child: Row(
                       children: [
@@ -1069,60 +1124,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 class _ProfileHero extends StatelessWidget {
-  const _ProfileHero({
-    required this.name,
-    required this.memberId,
-    required this.login,
-  });
+  const _ProfileHero({required this.name, required this.login});
 
   final String name;
-  final String memberId;
   final String login;
 
   @override
   Widget build(BuildContext context) {
+    final stacked = AppPalette.of(context).rounded;
     return Container(
-      padding: const EdgeInsets.all(21),
+      padding: EdgeInsets.all(21),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppPalette.navy, AppPalette.navyBright],
+        gradient: LinearGradient(
+          colors: [
+            AppPalette.of(context).navy,
+            AppPalette.of(context).navyBright,
+          ],
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppPalette.of(context).radius),
       ),
-      child: Row(
+      child: Flex(
+        direction: stacked ? Axis.vertical : Axis.horizontal,
         children: [
           CircleAvatar(
             radius: 31,
-            backgroundColor: Colors.white,
+            backgroundColor: AppPalette.of(context).card,
             child: Text(
               _initials(name),
-              style: const TextStyle(
-                color: AppPalette.navy,
+              style: TextStyle(
+                color: AppPalette.of(context).foregroundAccent,
                 fontWeight: FontWeight.w900,
                 fontSize: 19,
               ),
             ),
           ),
-          const SizedBox(width: 15),
-          Expanded(
+          SizedBox(width: 15, height: stacked ? 18 : 0),
+          Flexible(
+            flex: stacked ? 0 : 1,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: stacked
+                  ? CrossAxisAlignment.center
+                  : CrossAxisAlignment.start,
               children: [
                 Text(
                   name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 5),
+                SizedBox(height: 5),
                 Text(
-                  memberId.isEmpty ? login : memberId,
+                  login,
                   style: TextStyle(color: Colors.white.withValues(alpha: 0.76)),
                 ),
-                const SizedBox(height: 10),
-                const _TypePill(label: 'TRAINER', dark: true),
+                SizedBox(height: 10),
+                _TypePill(label: 'TRAINER', dark: true),
               ],
             ),
           ),
@@ -1142,11 +1200,6 @@ class _ProfileDetails extends StatelessWidget {
   Widget build(BuildContext context) {
     final rows = [
       _ProfileRowData(
-        Icons.badge_outlined,
-        'Member ID',
-        _text(profile['member_id'], fallback: session.memberId),
-      ),
-      _ProfileRowData(
         Icons.alternate_email_rounded,
         'Email',
         _text(profile['email'], fallback: session.login),
@@ -1156,47 +1209,20 @@ class _ProfileDetails extends StatelessWidget {
         'Phone',
         _text(profile['phone'], fallback: 'Not provided'),
       ),
-      _ProfileRowData(Icons.numbers_rounded, 'User ID', '${session.userId}'),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Profile details', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         _WhiteCard(
           padding: EdgeInsets.zero,
           child: Column(
             children: [
               for (var index = 0; index < rows.length; index++) ...[
                 _ProfileRow(data: rows[index]),
-                if (index != rows.length - 1)
-                  const Divider(height: 1, indent: 58),
+                if (index != rows.length - 1) Divider(height: 1, indent: 58),
               ],
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-        Text('Connection', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 10),
-        _WhiteCard(
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              _ProfileRow(
-                data: _ProfileRowData(
-                  Icons.language_rounded,
-                  'Base URL',
-                  session.baseUrl,
-                ),
-              ),
-              const Divider(height: 1, indent: 58),
-              _ProfileRow(
-                data: _ProfileRowData(
-                  Icons.storage_outlined,
-                  'Database',
-                  session.database,
-                ),
-              ),
             ],
           ),
         ),
@@ -1221,25 +1247,25 @@ class _ProfileRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 15),
+      padding: EdgeInsets.symmetric(horizontal: 17, vertical: 15),
       child: Row(
         children: [
-          Icon(data.icon, color: AppPalette.navy),
-          const SizedBox(width: 14),
+          Icon(data.icon, color: AppPalette.of(context).foregroundAccent),
+          SizedBox(width: 14),
           Expanded(
             child: Text(
               data.label,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Flexible(
             child: Text(
               data.value.isEmpty ? 'Not provided' : data.value,
               textAlign: TextAlign.end,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppPalette.navy,
+              style: TextStyle(
+                color: AppPalette.of(context).foregroundAccent,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -1263,23 +1289,49 @@ class _PageIntro extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          eyebrow,
-          style: const TextStyle(
-            color: AppPalette.navyBright,
-            fontWeight: FontWeight.w900,
-            fontSize: 11,
-            letterSpacing: 1.7,
-          ),
+    final style = AppPalette.of(context);
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [style.ink, style.navyBright],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        const SizedBox(height: 7),
-        Text(title, style: Theme.of(context).textTheme.displaySmall),
-        const SizedBox(height: 8),
-        Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
-      ],
+        borderRadius: BorderRadius.circular(style.radius),
+      ),
+      child: Column(
+        crossAxisAlignment: style.rounded
+            ? CrossAxisAlignment.center
+            : CrossAxisAlignment.start,
+        children: [
+          Text(
+            eyebrow,
+            style: TextStyle(
+              color: Colors.white70,
+              fontWeight: FontWeight.w900,
+              fontSize: 11,
+              letterSpacing: 1.7,
+            ),
+          ),
+          SizedBox(height: 7),
+          Text(
+            title,
+            textAlign: style.rounded ? TextAlign.center : TextAlign.start,
+            style: Theme.of(
+              context,
+            ).textTheme.displaySmall?.copyWith(color: Colors.white),
+          ),
+          SizedBox(height: 8),
+          Text(
+            subtitle,
+            textAlign: style.rounded ? TextAlign.center : TextAlign.start,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.white70),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1295,16 +1347,18 @@ class _WhiteCard extends StatelessWidget {
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppPalette.line),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x12071A33),
-            blurRadius: 13,
-            offset: Offset(0, 5),
-          ),
-        ],
+        color: AppPalette.of(context).card,
+        borderRadius: BorderRadius.circular(AppPalette.of(context).radius),
+        border: Border.all(color: AppPalette.of(context).line),
+        boxShadow: AppPalette.of(context).rounded
+            ? const [
+                BoxShadow(
+                  color: Color(0x12000000),
+                  blurRadius: 13,
+                  offset: Offset(0, 5),
+                ),
+              ]
+            : const [],
       ),
       child: child,
     );
@@ -1320,17 +1374,17 @@ class _TypePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: dark
             ? Colors.white.withValues(alpha: 0.16)
-            : const Color(0xFFEAF2FA),
-        borderRadius: BorderRadius.circular(20),
+            : AppPalette.of(context).mist,
+        borderRadius: BorderRadius.circular(AppPalette.of(context).radius),
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: dark ? Colors.white : AppPalette.navy,
+          color: dark ? Colors.white : AppPalette.of(context).foregroundAccent,
           fontSize: 10,
           fontWeight: FontWeight.w900,
           letterSpacing: 0.8,
@@ -1349,8 +1403,10 @@ class _LoadingList extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       height: compact ? 96 : 220,
-      child: const Center(
-        child: CircularProgressIndicator(color: AppPalette.navy),
+      child: Center(
+        child: CircularProgressIndicator(
+          color: AppPalette.of(context).foregroundAccent,
+        ),
       ),
     );
   }
@@ -1378,14 +1434,14 @@ class _EmptyCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(icon, size: 34, color: AppPalette.navy),
-          const SizedBox(height: 13),
+          Icon(icon, size: 34, color: AppPalette.of(context).foregroundAccent),
+          SizedBox(height: 13),
           Text(
             title,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium,
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 6),
           Text(
             detail,
             textAlign: TextAlign.center,
@@ -1406,30 +1462,30 @@ class _ErrorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _WhiteCard(
-      padding: const EdgeInsets.all(22),
+      padding: EdgeInsets.all(22),
       child: Column(
         children: [
-          const Icon(
+          Icon(
             Icons.cloud_off_outlined,
             size: 34,
-            color: AppPalette.navy,
+            color: AppPalette.of(context).foregroundAccent,
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             'Could not load this page',
             style: Theme.of(context).textTheme.titleMedium,
           ),
-          const SizedBox(height: 7),
+          SizedBox(height: 7),
           Text(
             message,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           OutlinedButton.icon(
             onPressed: onRetry,
-            icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Try again'),
+            icon: Icon(Icons.refresh_rounded),
+            label: Text('Try again'),
           ),
         ],
       ),
@@ -1446,9 +1502,9 @@ Future<void> _showSuccess(
   return showDialog<void>(
     context: context,
     builder: (context) => AlertDialog(
-      icon: const Icon(
+      icon: Icon(
         Icons.check_circle_rounded,
-        color: AppPalette.success,
+        color: AppPalette.of(context).success,
         size: 42,
       ),
       title: Text(title, textAlign: TextAlign.center),
@@ -1457,20 +1513,20 @@ Future<void> _showSuccess(
         children: [
           Text(
             member.memberId,
-            style: const TextStyle(
-              color: AppPalette.navy,
+            style: TextStyle(
+              color: AppPalette.of(context).foregroundAccent,
               fontSize: 16,
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 9),
+          SizedBox(height: 9),
           Text(detail, textAlign: TextAlign.center),
         ],
       ),
       actions: [
         FilledButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Done'),
+          child: Text('Done'),
         ),
       ],
     ),

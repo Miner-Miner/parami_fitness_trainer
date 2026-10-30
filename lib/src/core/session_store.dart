@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TrainerSession {
@@ -57,6 +58,28 @@ class TrainerSession {
 
 class SessionStore extends ChangeNotifier {
   TrainerSession? _session;
+  TrainerTheme _theme = TrainerTheme.monochrome;
+  TrainerTheme get theme => _theme;
+  bool _isDark = false;
+  bool get isDark => _isDark;
+
+  Future<void> setDarkMode(bool value) async {
+    final preferences = await SharedPreferences.getInstance();
+    if (!await preferences.setBool('trainer_dark_mode', value)) {
+      throw StateError('Could not save appearance');
+    }
+    _isDark = value;
+    notifyListeners();
+  }
+
+  Future<void> setTheme(TrainerTheme theme) async {
+    final preferences = await SharedPreferences.getInstance();
+    if (!await preferences.setString('trainer_theme', theme.name)) {
+      throw StateError('Could not save theme');
+    }
+    _theme = theme;
+    notifyListeners();
+  }
 
   TrainerSession? get session => _session;
   bool get isAuthenticated => _session != null;
@@ -64,6 +87,12 @@ class SessionStore extends ChangeNotifier {
   Future<void> restore() async {
     final preferences = await SharedPreferences.getInstance();
     _session = TrainerSession.fromPreferences(preferences);
+    _isDark = preferences.getBool('trainer_dark_mode') ?? false;
+    final savedTheme = preferences.getString('trainer_theme');
+    _theme = TrainerTheme.values.firstWhere(
+      (theme) => theme.name == savedTheme,
+      orElse: () => TrainerTheme.monochrome,
+    );
   }
 
   Future<void> save(TrainerSession session) async {
@@ -82,7 +111,9 @@ class SessionStore extends ChangeNotifier {
 
   Future<void> signOut() async {
     final preferences = await SharedPreferences.getInstance();
-    await preferences.clear();
+    for (final key in _session?.toPreferences().keys ?? <String>[]) {
+      await preferences.remove(key);
+    }
     _session = null;
     notifyListeners();
   }

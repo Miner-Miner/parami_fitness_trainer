@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../app.dart';
+import '../theme/app_theme.dart';
+import '../theme/theme_picker.dart';
 import '../core/api_client.dart';
 import '../core/session_store.dart';
 
@@ -69,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     return Scaffold(
-      backgroundColor: AppPalette.ink,
+      backgroundColor: AppPalette.of(context).ink,
       body: Stack(
         children: [
           Positioned(
@@ -77,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
             right: -size.width * 0.34,
             child: _Halo(
               size: size.width * 1.15,
-              color: AppPalette.navyBright.withValues(alpha: 0.66),
+              color: AppPalette.of(context).navyBright.withValues(alpha: 0.66),
             ),
           ),
           Positioned(
@@ -91,21 +92,29 @@ class _LoginScreenState extends State<LoginScreen> {
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+                padding: EdgeInsets.fromLTRB(24, 32, 24, 24),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 460),
+                  constraints: BoxConstraints(maxWidth: 460),
                   child: Form(
                     key: _formKey,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Icon(
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: ThemePickerButton(
+                            sessionStore: widget.sessionStore,
+                            onDark: true,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Icon(
                           Icons.fitness_center_rounded,
                           color: Colors.white,
                           size: 42,
                         ),
-                        const SizedBox(height: 26),
-                        const Text(
+                        SizedBox(height: 26),
+                        Text(
                           'Trainer sign in',
                           style: TextStyle(
                             color: Colors.white,
@@ -115,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             letterSpacing: -1.2,
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         Text(
                           'Manage your members, sessions, and class attendance from one focused workspace.',
                           style: TextStyle(
@@ -123,12 +132,14 @@ class _LoginScreenState extends State<LoginScreen> {
                             height: 1.5,
                           ),
                         ),
-                        const SizedBox(height: 34),
+                        SizedBox(height: 34),
                         Container(
-                          padding: const EdgeInsets.all(20),
+                          padding: EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(26),
+                            color: AppPalette.of(context).card,
+                            borderRadius: BorderRadius.circular(
+                              AppPalette.of(context).radius,
+                            ),
                             boxShadow: const [
                               BoxShadow(
                                 color: Color(0x44000000),
@@ -146,17 +157,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                   context,
                                 ).textTheme.headlineSmall,
                               ),
-                              const SizedBox(height: 5),
+                              SizedBox(height: 5),
                               Text(
                                 'Use your trainer account to continue.',
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
-                              const SizedBox(height: 22),
+                              SizedBox(height: 22),
                               TextFormField(
                                 controller: _usernameController,
                                 autocorrect: false,
                                 textInputAction: TextInputAction.next,
-                                decoration: const InputDecoration(
+                                decoration: InputDecoration(
                                   labelText: 'Username',
                                   prefixIcon: Icon(
                                     Icons.person_outline_rounded,
@@ -167,7 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ? 'Enter your username.'
                                     : null,
                               ),
-                              const SizedBox(height: 13),
+                              SizedBox(height: 13),
                               TextFormField(
                                 controller: _passwordController,
                                 obscureText: _hidePassword,
@@ -175,9 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 onFieldSubmitted: (_) => _login(),
                                 decoration: InputDecoration(
                                   labelText: 'Password',
-                                  prefixIcon: const Icon(
-                                    Icons.lock_outline_rounded,
-                                  ),
+                                  prefixIcon: Icon(Icons.lock_outline_rounded),
                                   suffixIcon: IconButton(
                                     tooltip: _hidePassword
                                         ? 'Show password'
@@ -197,7 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ? 'Enter your password.'
                                     : null,
                               ),
-                              const SizedBox(height: 18),
+                              SizedBox(height: 18),
                               _ConnectionPanel(
                                 expanded: _showConnection,
                                 onPressed: () => setState(
@@ -206,11 +215,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                 serverController: _serverController,
                                 databaseController: _databaseController,
                               ),
-                              const SizedBox(height: 22),
+                              SizedBox(height: 22),
                               FilledButton(
                                 onPressed: _isLoading ? null : _login,
                                 child: _isLoading
-                                    ? const SizedBox(
+                                    ? SizedBox(
                                         height: 20,
                                         width: 20,
                                         child: CircularProgressIndicator(
@@ -218,12 +227,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                           strokeWidth: 2,
                                         ),
                                       )
-                                    : const Text('Sign in as trainer'),
+                                    : Text('Sign in as trainer'),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 22),
+                        SizedBox(height: 22),
                         Center(
                           child: Text(
                             'Protected trainer access',
@@ -263,27 +272,30 @@ class _ConnectionPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppPalette.mist,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppPalette.line),
+        color: AppPalette.of(context).mist,
+        borderRadius: BorderRadius.circular(AppPalette.of(context).radius),
+        border: Border.all(color: AppPalette.of(context).line),
       ),
       child: Column(
         children: [
           InkWell(
             onTap: onPressed,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppPalette.of(context).radius),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 13),
               child: Row(
                 children: [
-                  const Icon(Icons.dns_outlined, color: AppPalette.navy),
-                  const SizedBox(width: 10),
-                  const Expanded(
+                  Icon(
+                    Icons.dns_outlined,
+                    color: AppPalette.of(context).foregroundAccent,
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
                     child: Text(
                       'Connection settings',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        color: AppPalette.navy,
+                        color: AppPalette.of(context).foregroundAccent,
                       ),
                     ),
                   ),
@@ -297,16 +309,16 @@ class _ConnectionPanel extends StatelessWidget {
             ),
           ),
           AnimatedCrossFade(
-            firstChild: const SizedBox.shrink(),
+            firstChild: SizedBox.shrink(),
             secondChild: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+              padding: EdgeInsets.fromLTRB(14, 0, 14, 14),
               child: Column(
                 children: [
                   TextFormField(
                     controller: serverController,
                     keyboardType: TextInputType.url,
                     autocorrect: false,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Base URL',
                       isDense: true,
                     ),
@@ -314,11 +326,11 @@ class _ConnectionPanel extends StatelessWidget {
                         ? 'Enter the base URL.'
                         : null,
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   TextFormField(
                     controller: databaseController,
                     autocorrect: false,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Odoo database',
                       isDense: true,
                     ),
@@ -332,7 +344,7 @@ class _ConnectionPanel extends StatelessWidget {
             crossFadeState: expanded
                 ? CrossFadeState.showSecond
                 : CrossFadeState.showFirst,
-            duration: const Duration(milliseconds: 180),
+            duration: Duration(milliseconds: 180),
           ),
         ],
       ),
