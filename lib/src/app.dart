@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'core/session_store.dart';
+import 'widgets/brand_header.dart';
 import 'theme/app_theme.dart';
 import 'screens/home_shell.dart';
 import 'screens/login_screen.dart';
@@ -114,39 +115,17 @@ class SplashScreen extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 88,
-                    height: 88,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(28),
-                    ),
-                    child: Icon(
-                      Icons.fitness_center_rounded,
-                      size: 43,
-                      color: AppPalette.of(context).navy,
-                    ),
-                  ),
-                  SizedBox(height: 25),
-                  Text(
-                    'PARAMI',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 29,
-                      letterSpacing: 6,
-                    ),
-                  ),
+                  const BrandHeader(logoWidth: 240),
                   SizedBox(height: 8),
-                  Text(
-                    'TRAINER CONSOLE',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.72),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                      letterSpacing: 2.4,
-                    ),
-                  ),
+                  // Text(
+                  //   'TRAINER CONSOLE',
+                  //   style: TextStyle(
+                  //     color: Colors.white.withValues(alpha: 0.72),
+                  //     fontWeight: FontWeight.w700,
+                  //     fontSize: 12,
+                  //     letterSpacing: 2.4,
+                  //   ),
+                  // ),
                 ],
               ),
             ),

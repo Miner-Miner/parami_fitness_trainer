@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../widgets/brand_header.dart';
 import '../theme/theme_picker.dart';
 import '../core/api_client.dart';
 import '../core/session_store.dart';
@@ -39,9 +40,8 @@ class _HomeShellState extends State<HomeShell> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          theme == TrainerTheme.roseGold ? destinations[_index].$1 : 'PARAMI',
-        ),
+        toolbarHeight: 88,
+        title: const BrandHeader(),
         actions: [
           ThemePickerButton(sessionStore: widget.sessionStore, onDark: true),
         ],
@@ -261,7 +261,7 @@ class _CustomerCard extends StatelessWidget {
               _initials(name),
               style: TextStyle(
                 color: Colors.white,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -406,17 +406,17 @@ class _SessionScanScreenState extends State<SessionScanScreen> {
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     SizedBox(height: 6),
-                    Text(
-                      'The QR must contain both member_id and user_id.',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.72),
-                        height: 1.4,
-                      ),
-                    ),
+                    // Text(
+                    //   'The QR must contain both member_id and user_id.',
+                    //   style: TextStyle(
+                    //     color: Colors.white.withValues(alpha: 0.72),
+                    //     height: 1.4,
+                    //   ),
+                    // ),
                   ],
                 ),
               ),
@@ -753,7 +753,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
         elevation: 0,
         title: Text(
           'Class details',
-          style: TextStyle(fontWeight: FontWeight.w800),
+          style: TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
       body: RefreshIndicator(
@@ -785,7 +785,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> {
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 27,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w700,
                       letterSpacing: -0.8,
                     ),
                   ),
@@ -992,7 +992,7 @@ class _ScheduleCard extends StatelessWidget {
               '${bookingCount.isEmpty ? '0' : bookingCount}/${capacity.isEmpty ? '-' : capacity}',
               style: TextStyle(
                 color: AppPalette.of(context).foregroundAccent,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
               ),
             ),
         ],
@@ -1102,7 +1102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             'Sign out',
                             style: TextStyle(
                               color: Color(0xFFB73535),
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
@@ -1153,7 +1153,7 @@ class _ProfileHero extends StatelessWidget {
               _initials(name),
               style: TextStyle(
                 color: AppPalette.of(context).foregroundAccent,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w700,
                 fontSize: 19,
               ),
             ),
@@ -1171,7 +1171,7 @@ class _ProfileHero extends StatelessWidget {
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 22,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 SizedBox(height: 5),
@@ -1309,7 +1309,7 @@ class _PageIntro extends StatelessWidget {
             eyebrow,
             style: TextStyle(
               color: Colors.white70,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w700,
               fontSize: 11,
               letterSpacing: 1.7,
             ),
@@ -1386,7 +1386,7 @@ class _TypePill extends StatelessWidget {
         style: TextStyle(
           color: dark ? Colors.white : AppPalette.of(context).foregroundAccent,
           fontSize: 10,
-          fontWeight: FontWeight.w900,
+          fontWeight: FontWeight.w700,
           letterSpacing: 0.8,
         ),
       ),
@@ -1516,7 +1516,7 @@ Future<void> _showSuccess(
             style: TextStyle(
               color: AppPalette.of(context).foregroundAccent,
               fontSize: 16,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
             ),
           ),
           SizedBox(height: 9),

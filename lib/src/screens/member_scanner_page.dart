@@ -142,7 +142,7 @@ class _MemberScannerPageState extends State<MemberScannerPage> {
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 18,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),

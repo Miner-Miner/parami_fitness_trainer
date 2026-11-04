@@ -38,9 +38,9 @@ class ThemePickerButton extends StatelessWidget {
                     selected: sessionStore.theme == theme,
                     leading: CircleAvatar(
                       backgroundColor: theme.accent,
-                      child: const Icon(
+                      child: Icon(
                         Icons.palette_outlined,
-                        color: Colors.white,
+                        color: AppPalette.forTheme(theme).onAccent,
                       ),
                     ),
                     title: Text(theme.label),

@@ -30,7 +30,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(store.theme, theme);
       final context = tester.element(find.byType(TextFormField).first);
-      expect(Theme.of(context).colorScheme.primary, theme.accent);
+      expect(
+        Theme.of(context).colorScheme.primary,
+        theme == TrainerTheme.gold ? const Color(0xFF596600) : theme.accent,
+      );
       expect(AppPalette.of(context).mist, theme.background);
       expect(find.text('trainer'), findsOneWidget);
       expect(find.byType(NavigationBar), findsNothing);
@@ -87,8 +90,19 @@ void main() {
         expect(find.text('Your profile'), findsOneWidget);
         final profileContext = tester.element(find.text('Your profile'));
         final activeTheme = Theme.of(profileContext);
-        expect(activeTheme.appBarTheme.backgroundColor, theme.accent);
-        expect(activeTheme.textTheme.titleLarge?.color, theme.accent);
+        expect(
+          activeTheme.appBarTheme.backgroundColor,
+          const Color(0xFF191919),
+        );
+        expect(
+          activeTheme.textTheme.titleLarge?.color,
+          theme == TrainerTheme.gold ? const Color(0xFF596600) : theme.accent,
+        );
+        expect(
+          activeTheme.textTheme.titleLarge?.fontFamily,
+          'LibreBaskerville',
+        );
+        expect(activeTheme.textTheme.titleLarge?.fontWeight, FontWeight.w700);
         final header = tester.widget<Text>(find.text('Your profile'));
         expect(header.style?.color, Colors.white);
         final headerContainer = tester

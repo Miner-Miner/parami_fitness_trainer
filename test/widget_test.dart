@@ -16,7 +16,11 @@ void main() {
   ) async {
     await tester.pumpWidget(TrainerApp(sessionStore: SessionStore()));
 
-    expect(find.text('PARAMI'), findsOneWidget);
+    expect(find.bySemanticsLabel('Parami Fitness'), findsOneWidget);
+    expect(
+      find.textContaining(RegExp(r'\d{2}:\d{2} [A-Z][a-z]{2} \d{2} \d{2}')),
+      findsOneWidget,
+    );
 
     await tester.pump(const Duration(milliseconds: 1600));
     expect(find.text('Trainer sign in'), findsOneWidget);
