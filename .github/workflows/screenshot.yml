@@ -1,0 +1,75 @@
+
+name: Generate iOS Screenshots
+
+on:
+  workflow_dispatch:
+
+jobs:
+  screenshots:
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Find and boot iPhone Simulator
+        run: |
+          xcrun simctl list devices available
+          DEVICE_ID=$(xcrun simctl list devices available \
+            | grep -E 'iPhone.*\([0-9A-F-]{36}\)' \
+            | head -1 \
+            | grep -oE '[0-9A-F-]{36}')
+
+          test -n "$DEVICE_ID" || exit 1
+          echo "DEVICE_ID=$DEVICE_ID" >> "$GITHUB_ENV"
+
+          xcrun simctl boot "$DEVICE_ID" || true
+          xcrun simctl bootstatus "$DEVICE_ID" -b
+
+      - name: Build iOS Simulator App
+        run: |
+          flutter build ios --simulator --debug
+
+      - name: Install and launch application
+        run: |
+          APP_PATH="build/ios/iphonesimulator/Runner.app"
+
+          BUNDLE_ID=$(/usr/libexec/PlistBuddy \
+            -c "Print CFBundleIdentifier" \
+            "$APP_PATH/Info.plist")
+
+          xcrun simctl install "$DEVICE_ID" "$APP_PATH"
+          xcrun simctl status_bar "$DEVICE_ID" override \
+            --time "9:41" \
+            --dataNetwork wifi \
+            --wifiMode active \
+            --wifiBars 3 \
+            --batteryState charged \
+            --batteryLevel 100
+
+          xcrun simctl launch "$DEVICE_ID" "$BUNDLE_ID"
+          sleep 15
+
+      - name: Capture screenshot
+        run: |
+          mkdir -p screenshots/iphone
+          xcrun simctl io "$DEVICE_ID" screenshot \
+            screenshots/iphone/01-launch.png
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-screenshots
+          path: screenshots/
+          if-no-files-found: warn

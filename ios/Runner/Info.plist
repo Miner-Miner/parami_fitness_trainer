@@ -47,5 +47,7 @@
 	<string>Parami Trainer uses the camera to scan member QR codes for sessions and class attendance.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
