@@ -18,22 +18,13 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _serverController = TextEditingController(
-    text: ApiClient.defaultBaseUrl,
-  );
-  final _databaseController = TextEditingController(
-    text: ApiClient.defaultDatabase,
-  );
   var _hidePassword = true;
   var _isLoading = false;
-  var _showConnection = false;
 
   @override
   void dispose() {
     _usernameController.dispose();
     _passwordController.dispose();
-    _serverController.dispose();
-    _databaseController.dispose();
     super.dispose();
   }
 
@@ -43,8 +34,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final session = await ApiClient.login(
-        baseUrl: _serverController.text,
-        database: _databaseController.text,
+        baseUrl: ApiClient.defaultBaseUrl,
+        database: ApiClient.defaultDatabase,
         login: _usernameController.text,
         password: _passwordController.text,
       );
@@ -108,10 +99,19 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        Icon(
-                          Icons.fitness_center_rounded,
-                          color: Colors.white,
-                          size: 42,
+                        Center(
+                          child: ClipRect(
+                            child: Align(
+                              heightFactor: 0.4,
+                              child: Image.asset(
+                                'assets/branding/parami_fitness_logo-removebg.png',
+                                width: 240,
+                                height: 240,
+                                fit: BoxFit.contain,
+                                semanticLabel: 'Parami Fitness',
+                              ),
+                            ),
+                          ),
                         ),
                         SizedBox(height: 26),
                         Text(
@@ -206,15 +206,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ? 'Enter your password.'
                                     : null,
                               ),
-                              SizedBox(height: 18),
-                              _ConnectionPanel(
-                                expanded: _showConnection,
-                                onPressed: () => setState(
-                                  () => _showConnection = !_showConnection,
-                                ),
-                                serverController: _serverController,
-                                databaseController: _databaseController,
-                              ),
                               SizedBox(height: 22),
                               FilledButton(
                                 onPressed: _isLoading ? null : _login,
@@ -248,103 +239,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ConnectionPanel extends StatelessWidget {
-  const _ConnectionPanel({
-    required this.expanded,
-    required this.onPressed,
-    required this.serverController,
-    required this.databaseController,
-  });
-
-  final bool expanded;
-  final VoidCallback onPressed;
-  final TextEditingController serverController;
-  final TextEditingController databaseController;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppPalette.of(context).mist,
-        borderRadius: BorderRadius.circular(AppPalette.of(context).radius),
-        border: Border.all(color: AppPalette.of(context).line),
-      ),
-      child: Column(
-        children: [
-          InkWell(
-            onTap: onPressed,
-            borderRadius: BorderRadius.circular(AppPalette.of(context).radius),
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.dns_outlined,
-                    color: AppPalette.of(context).foregroundAccent,
-                  ),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Connection settings',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: AppPalette.of(context).foregroundAccent,
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    expanded
-                        ? Icons.expand_less_rounded
-                        : Icons.expand_more_rounded,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          AnimatedCrossFade(
-            firstChild: SizedBox.shrink(),
-            secondChild: Padding(
-              padding: EdgeInsets.fromLTRB(14, 0, 14, 14),
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: serverController,
-                    keyboardType: TextInputType.url,
-                    autocorrect: false,
-                    decoration: InputDecoration(
-                      labelText: 'Base URL',
-                      isDense: true,
-                    ),
-                    validator: (value) => value == null || value.trim().isEmpty
-                        ? 'Enter the base URL.'
-                        : null,
-                  ),
-                  SizedBox(height: 12),
-                  TextFormField(
-                    controller: databaseController,
-                    autocorrect: false,
-                    decoration: InputDecoration(
-                      labelText: 'Odoo database',
-                      isDense: true,
-                    ),
-                    validator: (value) => value == null || value.trim().isEmpty
-                        ? 'Enter the database name.'
-                        : null,
-                  ),
-                ],
-              ),
-            ),
-            crossFadeState: expanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
-            duration: Duration(milliseconds: 180),
           ),
         ],
       ),
